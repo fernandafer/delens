@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DELENS · CRM Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500&family=Cormorant+Garamond:wght@300;400&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --blue:#1C3A7A;
+  --blue-deep:#122660;
+  --blue-mid:#3355A0;
+  --sage:#5E9E82;
+  --sage-dark:#4A8A6E;
+  --white:#ffffff;
+  --gray:#B8B8B8;
+  --bg:#F4F5F8;
+  --text:#1a1a2e;
+  --text-light:#666;
+  --border:#DDE2EF;
+  --red:#C0392B;
+  --amber:#D4A017;
+  --green:#5E9E82;
+}
+
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* LOGIN */
+#login-screen{position:fixed;inset:0;background:var(--blue);display:flex;align-items:center;justify-content:center;z-index:1000}
+.login-box{background:white;border-radius:12px;padding:48px 40px;width:360px;text-align:center}
+.login-logo{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:32px}
+.login-logo span{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:300;letter-spacing:0.25em;color:var(--blue)}
+.login-box h2{font-size:15px;font-weight:400;color:var(--text-light);margin-bottom:28px}
+.login-input{width:100%;padding:12px 16px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:'Outfit',sans-serif;outline:none;transition:border-color 0.2s}
+.login-input:focus{border-color:var(--blue)}
+.login-btn{width:100%;margin-top:16px;padding:13px;background:var(--blue);color:white;border:none;border-radius:8px;font-size:14px;font-weight:500;font-family:'Outfit',sans-serif;cursor:pointer;transition:background 0.2s}
+.login-btn:hover{background:var(--blue-deep)}
+.login-error{color:var(--red);font-size:12px;margin-top:10px;display:none}
+
+/* LAYOUT */
+#app{display:none}
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:220px;background:var(--blue-deep);padding:24px 0;display:flex;flex-direction:column}
+.sidebar-logo{display:flex;align-items:center;gap:8px;padding:0 20px 28px;border-bottom:1px solid rgba(255,255,255,0.08)}
+.sidebar-logo span{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:300;letter-spacing:0.22em;color:white}
+.sidebar nav{padding:16px 0;flex:1}
+.nav-item{display:flex;align-items:center;gap:10px;padding:11px 20px;font-size:13px;color:rgba(255,255,255,0.55);cursor:pointer;transition:all 0.15s;border-left:2px solid transparent}
+.nav-item:hover{color:white;background:rgba(255,255,255,0.06)}
+.nav-item.active{color:white;border-left-color:var(--sage);background:rgba(255,255,255,0.08)}
+.nav-icon{width:16px;text-align:center}
+.sidebar-footer{padding:16px 20px;border-top:1px solid rgba(255,255,255,0.08);font-size:11px;color:rgba(255,255,255,0.25)}
+
+.main{margin-left:220px;padding:32px;min-height:100vh}
+
+/* HEADER */
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px}
+.page-title{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:300;color:var(--blue)}
+.page-subtitle{font-size:13px;color:var(--text-light);margin-top:2px}
+.header-actions{display:flex;gap:10px}
+.btn{padding:9px 18px;border-radius:7px;font-size:13px;font-weight:400;font-family:'Outfit',sans-serif;cursor:pointer;border:none;transition:all 0.15s}
+.btn-primary{background:var(--sage);color:white}
+.btn-primary:hover{background:var(--sage-dark)}
+.btn-outline{background:white;color:var(--blue);border:1.5px solid var(--border)}
+.btn-outline:hover{border-color:var(--blue)}
+
+/* KPI CARDS */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px}
+.kpi{background:white;border-radius:10px;padding:20px 22px;border:1px solid var(--border)}
+.kpi-val{font-family:'Cormorant Garamond',serif;font-size:40px;font-weight:300;color:var(--blue);line-height:1}
+.kpi-label{font-size:12px;color:var(--text-light);margin-top:6px}
+.kpi-delta{font-size:11px;margin-top:4px;font-weight:500}
+.kpi-delta.up{color:var(--green)}
+.kpi-delta.warn{color:var(--amber)}
+
+/* FILTERS */
+.filters{display:flex;gap:10px;margin-bottom:20px;align-items:center;flex-wrap:wrap}
+.filter-label{font-size:12px;color:var(--text-light)}
+.filter-btn{padding:6px 14px;border-radius:20px;font-size:12px;font-family:'Outfit',sans-serif;cursor:pointer;border:1.5px solid var(--border);background:white;color:var(--text-light);transition:all 0.15s}
+.filter-btn.active{background:var(--blue);color:white;border-color:var(--blue)}
+.search-input{padding:7px 14px;border:1.5px solid var(--border);border-radius:7px;font-size:13px;font-family:'Outfit',sans-serif;outline:none;width:200px}
+.search-input:focus{border-color:var(--blue)}
+
+/* TABLE */
+.table-wrap{background:white;border-radius:10px;border:1px solid var(--border);overflow:hidden;margin-bottom:24px}
+.table-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.table-title{font-size:14px;font-weight:500;color:var(--text)}
+.table-count{font-size:12px;color:var(--text-light)}
+table{width:100%;border-collapse:collapse}
+th{padding:11px 16px;text-align:left;font-size:11px;font-weight:500;color:var(--text-light);letter-spacing:0.08em;text-transform:uppercase;border-bottom:1px solid var(--border);background:#FAFBFC}
+td{padding:13px 16px;font-size:13px;border-bottom:1px solid #F0F2F8;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#FAFBFE}
+
+/* SCORE BAR */
+.score-wrap{display:flex;align-items:center;gap:10px}
+.score-bar{width:80px;height:6px;background:#EEF0F8;border-radius:3px;overflow:hidden}
+.score-fill{height:100%;border-radius:3px}
+.score-num{font-size:12px;font-weight:500;min-width:20px}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500}
+.badge-new{background:#EEF5FF;color:var(--blue)}
+.badge-contacted{background:#FFF8E6;color:#B8860B}
+.badge-qualified{background:#E8F8EF;color:#2E7D52}
+.badge-closed{background:#F0F0F0;color:#888}
+.badge-lost{background:#FEF0EE;color:var(--red)}
+
+.nivel-alto{color:#C0392B;font-weight:500}
+.nivel-medio{color:#D4A017;font-weight:500}
+.nivel-bajo{color:#5E9E82;font-weight:500}
+
+/* NOTES */
+.note-input{border:none;background:transparent;font-size:12px;font-family:'Outfit',sans-serif;color:var(--text-light);width:100%;outline:none;cursor:pointer}
+.note-input:focus{color:var(--text)}
+
+/* STATUS SELECT */
+.status-select{border:none;background:transparent;font-size:12px;font-family:'Outfit',sans-serif;cursor:pointer;outline:none;color:var(--text)}
+
+/* ABANDONOS */
+.abandonos-wrap{background:white;border-radius:10px;border:1px solid var(--border);overflow:hidden}
+
+/* SECTION TABS */
+.tabs{display:flex;gap:0;margin-bottom:24px;border-bottom:1px solid var(--border)}
+.tab{padding:10px 20px;font-size:13px;font-weight:400;color:var(--text-light);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.15s;margin-bottom:-1px}
+.tab.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:500}
+.tab-content{display:none}
+.tab-content.active{display:block}
+
+/* EMPTY */
+.empty-state{padding:48px;text-align:center;color:var(--text-light);font-size:13px}
+
+/* ── RESPONSIVE MÓVIL ───────────────────────────────── */
+@media (max-width: 768px) {
+  .sidebar { display: none; }
+  .main { margin-left: 0; padding: 16px; }
+  .kpi-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .kpi { padding: 14px 16px; }
+  .kpi-val { font-size: 32px; }
+  .page-header { flex-direction: column; gap: 12px; align-items: flex-start; }
+  .header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn { padding: 8px 14px; font-size: 12px; }
+  table { font-size: 12px; }
+  th, td { padding: 8px 10px; }
+  .filters { gap: 6px; }
+  .filter-btn { padding: 5px 10px; font-size: 11px; }
+  .search-input { width: 100%; }
+  .table-wrap { overflow-x: auto; }
+  /* Mobile nav top bar */
+  .mobile-nav { display: flex !important; }
+}
+@media (min-width: 769px) {
+  .mobile-nav { display: none !important; }
+}
+.mobile-nav {
+  background: var(--blue-deep);
+  padding: 12px 16px;
+  display: none;
+  gap: 8px;
+  flex-wrap: wrap;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.mobile-nav-btn {
+  padding: 7px 14px;
+  background: rgba(255,255,255,0.1);
+  color: white;
+  border: none;
+  border-radius: 20px;
+  font-size: 12px;
+  font-family: 'Outfit', sans-serif;
+  cursor: pointer;
+}
+.mobile-nav-btn.active { background: var(--sage); }
+
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">
+      <svg width="28" height="28" viewBox="0 0 52 52" fill="none">
+        <circle cx="21" cy="21" r="14" stroke="#1C3A7A" stroke-width="2"/>
+        <circle cx="21" cy="21" r="14" stroke="#1C3A7A22" stroke-width="5" fill="none"/>
+        <circle cx="21" cy="21" r="6" fill="#1C3A7A12" stroke="#1C3A7A60" stroke-width="1.2"/>
+        <circle cx="21" cy="21" r="2.5" fill="#1C3A7A"/>
+        <line x1="31" y1="31" x2="45" y2="45" stroke="#1C3A7A" stroke-width="3.5" stroke-linecap="round"/>
+      </svg>
+      <span>DELENS</span>
+    </div>
+    <h2>Acceso privado · CRM</h2>
+    <input type="password" class="login-input" id="pwd-input" placeholder="Contraseña" onkeydown="if(event.key==='Enter')checkPwd()">
+    <button class="login-btn" onclick="checkPwd()">Entrar</button>
+    <div class="login-error" id="login-error">Contraseña incorrecta</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="mobile-nav" id="mobile-nav">
+    <button class="mobile-nav-btn active" onclick="showSection('leads');updateMobileNav(this)">◎ Leads</button>
+    <button class="mobile-nav-btn" onclick="showSection('abandonos');updateMobileNav(this)">◌ Abandonos</button>
+    <button class="mobile-nav-btn" onclick="showSection('stats');updateMobileNav(this)">▦ Stats</button>
+    <button class="mobile-nav-btn" onclick="syncSheets()" style="margin-left:auto;background:var(--sage)">↻ Sync</button>
+  </div>
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <svg width="22" height="22" viewBox="0 0 52 52" fill="none">
+        <circle cx="21" cy="21" r="14" stroke="white" stroke-width="2"/>
+        <circle cx="21" cy="21" r="6" fill="rgba(255,255,255,0.12)" stroke="rgba(255,255,255,0.5)" stroke-width="1.2"/>
+        <circle cx="21" cy="21" r="2.5" fill="white"/>
+        <line x1="31" y1="31" x2="45" y2="45" stroke="white" stroke-width="3.5" stroke-linecap="round"/>
+      </svg>
+      <span>DELENS</span>
+    </div>
+    <nav>
+      <div class="nav-item active" onclick="showSection('leads')"><span class="nav-icon">◎</span> Leads</div>
+      <div class="nav-item" onclick="showSection('abandonos')"><span class="nav-icon">◌</span> Abandonos</div>
+      <div class="nav-item" onclick="showSection('stats')"><span class="nav-icon">▦</span> Estadísticas</div>
+    </nav>
+    <div class="sidebar-footer">DELENS · Uso privado<br>fernanda@delens.es</div>
+  </div>
+
+  <div class="main">
+
+    <!-- LEADS -->
+    <div id="section-leads" class="tab-content active">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Leads del test</div>
+          <div class="page-subtitle">Empresarios que han completado el diagnóstico</div>
+        </div>
+        <div class="header-actions">
+          <button class="btn btn-outline" onclick="exportCSV()">Exportar CSV</button>
+          <button class="btn btn-primary" onclick="syncSheets()">↻ Sincronizar Sheets</button>
+        </div>
+      </div>
+
+      <!-- KPIs -->
+      <div class="kpi-grid">
+        <div class="kpi">
+          <div class="kpi-val" id="kpi-total">0</div>
+          <div class="kpi-label">Leads totales</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-val" id="kpi-nuevos">0</div>
+          <div class="kpi-label">Sin contactar</div>
+          <div class="kpi-delta warn" id="kpi-nuevos-pct"></div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-val" id="kpi-altos">0</div>
+          <div class="kpi-label">Bloqueo alto (7–10)</div>
+          <div class="kpi-delta up">Prioridad máxima</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-val" id="kpi-score-avg">—</div>
+          <div class="kpi-label">Score medio</div>
+        </div>
+      </div>
+
+      <!-- FILTERS -->
+      <div class="filters">
+        <span class="filter-label">Filtrar:</span>
+        <button class="filter-btn active" onclick="filterLeads('todos',this)">Todos</button>
+        <button class="filter-btn" onclick="filterLeads('nuevo',this)">Sin contactar</button>
+        <button class="filter-btn" onclick="filterLeads('alto',this)">Bloqueo alto</button>
+        <button class="filter-btn" onclick="filterLeads('contactado',this)">Contactados</button>
+        <input type="text" class="search-input" placeholder="Buscar por email o nombre..." oninput="searchLeads(this.value)">
+      </div>
+
+      <!-- TABLE -->
+      <div class="table-wrap">
+        <div class="table-header">
+          <div class="table-title">Leads</div>
+          <div class="table-count" id="leads-count"></div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Email</th>
+              <th>Score bloqueo</th>
+              <th>Nivel</th>
+              <th>Estado</th>
+              <th>Notas</th>
+            </tr>
+          </thead>
+          <tbody id="leads-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ABANDONOS -->
+    <div id="section-abandonos" class="tab-content">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Abandonos</div>
+          <div class="page-subtitle">Emails capturados que no completaron el test</div>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <div class="table-header">
+          <div class="table-title">Emails sin completar</div>
+          <div class="table-count" id="abandonos-count"></div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Email</th>
+              <th>Paso hasta donde llegó</th>
+              <th>Acción</th>
+            </tr>
+          </thead>
+          <tbody id="abandonos-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div id="section-stats" class="tab-content">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Estadísticas</div>
+          <div class="page-subtitle">Distribución de scores y conversión</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div class="table-wrap">
+          <div class="table-header"><div class="table-title">Distribución por nivel de bloqueo</div></div>
+          <div style="padding:24px" id="stats-dist"></div>
+        </div>
+        <div class="table-wrap">
+          <div class="table-header"><div class="table-title">Distribución por estado</div></div>
+          <div style="padding:24px" id="stats-estado"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ── DATOS DEMO ──────────────────────────────────────────────
+const LEADS_DEMO = [
+  {fecha:'2026-05-28',email:'miguel.torres@constructora-mt.es',score:8.4,nivel:'alto',estado:'nuevo',nota:''},
+  {fecha:'2026-05-27',email:'ana.garcia@textilgarcia.com',score:7.1,nivel:'alto',estado:'contactado',nota:'Llamada el 28/5. Interesada en ongoing.'},
+  {fecha:'2026-05-26',email:'javier.ruiz@distribuciones-jr.es',score:5.8,nivel:'medio',estado:'nuevo',nota:''},
+  {fecha:'2026-05-25',email:'laura.martin@cafeteriaslm.com',score:4.2,nivel:'bajo',estado:'contactado',nota:'No momento ahora. Recontactar sept.'},
+  {fecha:'2026-05-24',email:'pablo.fernandez@pf-servicios.es',score:9.1,nivel:'alto',estado:'cualificado',nota:'Muy interesado. Propuesta enviada.'},
+  {fecha:'2026-05-23',email:'carmen.lopez@academiacl.es',score:6.3,nivel:'medio',estado:'nuevo',nota:''},
+  {fecha:'2026-05-22',email:'antonio.diaz@talleres-diaz.com',score:3.1,nivel:'bajo',estado:'cerrado',nota:'No encaja perfil.'},
+  {fecha:'2026-05-21',email:'isabel.sanchez@isabelsan.es',score:7.8,nivel:'alto',estado:'cualificado',nota:'Decision Lens. Reunión 3 junio.'},
+];
+
+const ABANDONOS_DEMO = [
+  {fecha:'2026-05-28',email:'info@empresa-xyz.com',paso:'Bloque B'},
+  {fecha:'2026-05-27',email:'contacto@negocio-abc.es',paso:'Bloque A'},
+  {fecha:'2026-05-26',email:'hola@startupdef.com',paso:'Bloque C'},
+  {fecha:'2026-05-25',email:'admin@comercialgh.es',paso:'Bloque A'},
+];
+
+let allLeads = [...LEADS_DEMO];
+let filteredLeads = [...allLeads];
+let currentFilter = 'todos';
+let currentSearch = '';
+
+// ── AUTH ─────────────────────────────────────────────────────
+
+// Auto-sincronizar al abrir si hay URL configurada
+function autoSync(){
+  if(APPS_SCRIPT_URL){
+    syncSheets();
+    // Refresh cada 5 minutos
+    setInterval(syncSheets, 5 * 60 * 1000);
+  } else {
+    renderAll();
+  }
+}
+
+function updateMobileNav(btn){
+  document.querySelectorAll('.mobile-nav-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function checkPwd(){
+  const pwd = document.getElementById('pwd-input').value;
+  if(pwd === 'delens2026'){
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    autoSync();
+  } else {
+    document.getElementById('login-error').style.display = 'block';
+  }
+}
+
+// ── NAVIGATION ───────────────────────────────────────────────
+function showSection(id){
+  document.querySelectorAll('.tab-content').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
+  document.getElementById('section-'+id).classList.add('active');
+  event.currentTarget.classList.add('active');
+  if(id==='stats') renderStats();
+}
+
+// ── RENDER ───────────────────────────────────────────────────
+function renderAll(){
+  renderKPIs();
+  renderLeads();
+  renderAbandonos();
+}
+
+function renderKPIs(){
+  const total = allLeads.length;
+  const nuevos = allLeads.filter(l=>l.estado==='nuevo').length;
+  const altos = allLeads.filter(l=>l.nivel==='alto').length;
+  const avgScore = total ? (allLeads.reduce((s,l)=>s+l.score,0)/total).toFixed(1) : '—';
+  document.getElementById('kpi-total').textContent = total;
+  document.getElementById('kpi-nuevos').textContent = nuevos;
+  document.getElementById('kpi-nuevos-pct').textContent = nuevos ? `${Math.round(nuevos/total*100)}% pendientes` : '';
+  document.getElementById('kpi-altos').textContent = altos;
+  document.getElementById('kpi-score-avg').textContent = avgScore;
+}
+
+function scoreColor(score){
+  if(score>=7) return '#C0392B';
+  if(score>=5) return '#D4A017';
+  return '#5E9E82';
+}
+
+function nivelBadge(nivel){
+  const map = {alto:'nivel-alto',medio:'nivel-medio',bajo:'nivel-bajo'};
+  const label = {alto:'Alto',medio:'Medio',bajo:'Bajo'};
+  return `<span class="${map[nivel]}">${label[nivel]}</span>`;
+}
+
+function estadoBadge(estado){
+  const map = {nuevo:'badge-new',contactado:'badge-contacted',cualificado:'badge-qualified',cerrado:'badge-closed',perdido:'badge-lost'};
+  const label = {nuevo:'Sin contactar',contactado:'Contactado',cualificado:'Cualificado',cerrado:'Cerrado',perdido:'Perdido'};
+  return `<span class="badge ${map[estado]||'badge-new'}">${label[estado]||estado}</span>`;
+}
+
+function renderLeads(){
+  applyFilters();
+  const tbody = document.getElementById('leads-tbody');
+  document.getElementById('leads-count').textContent = `${filteredLeads.length} de ${allLeads.length}`;
+
+  if(!filteredLeads.length){
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state">No hay leads con este filtro</div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filteredLeads.map((l,i)=>{
+    const fill = Math.round(l.score/10*100);
+    const idx = allLeads.indexOf(l);
+    return `<tr>
+      <td style="color:var(--text-light);font-size:12px">${l.fecha}</td>
+      <td><a href="mailto:${l.email}" style="color:var(--blue);text-decoration:none">${l.email}</a></td>
+      <td>
+        <div class="score-wrap">
+          <div class="score-bar"><div class="score-fill" style="width:${fill}%;background:${scoreColor(l.score)}"></div></div>
+          <span class="score-num" style="color:${scoreColor(l.score)}">${l.score}</span>
+        </div>
+      </td>
+      <td>${nivelBadge(l.nivel)}</td>
+      <td>
+        <select class="status-select" onchange="updateEstado(${idx},this.value)">
+          <option value="nuevo" ${l.estado==='nuevo'?'selected':''}>Sin contactar</option>
+          <option value="contactado" ${l.estado==='contactado'?'selected':''}>Contactado</option>
+          <option value="cualificado" ${l.estado==='cualificado'?'selected':''}>Cualificado</option>
+          <option value="cerrado" ${l.estado==='cerrado'?'selected':''}>Cerrado</option>
+          <option value="perdido" ${l.estado==='perdido'?'selected':''}>Perdido</option>
+        </select>
+      </td>
+      <td><input class="note-input" placeholder="Añadir nota..." value="${l.nota}" onblur="updateNota(${idx},this.value)"></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderAbandonos(){
+  const tbody = document.getElementById('abandonos-tbody');
+  document.getElementById('abandonos-count').textContent = `${ABANDONOS_DEMO.length} emails`;
+  tbody.innerHTML = ABANDONOS_DEMO.map(a=>`
+    <tr>
+      <td style="color:var(--text-light);font-size:12px">${a.fecha}</td>
+      <td><a href="mailto:${a.email}" style="color:var(--blue);text-decoration:none">${a.email}</a></td>
+      <td style="color:var(--text-light)">${a.paso}</td>
+      <td><a href="mailto:${a.email}?subject=Tu diagnóstico DELENS&body=Hola, vi que empezaste el test..." style="color:var(--sage);font-size:12px">Recontactar →</a></td>
+    </tr>
+  `).join('');
+}
+
+function renderStats(){
+  const niveles = {alto:0,medio:0,bajo:0};
+  const estados = {};
+  allLeads.forEach(l=>{
+    niveles[l.nivel]=(niveles[l.nivel]||0)+1;
+    estados[l.estado]=(estados[l.estado]||0)+1;
+  });
+  const total = allLeads.length;
+
+  const distEl = document.getElementById('stats-dist');
+  distEl.innerHTML = Object.entries({alto:'Bloqueo alto (7–10)',medio:'Bloqueo medio (5–6)',bajo:'Bloqueo bajo (1–4)'}).map(([k,label])=>{
+    const n = niveles[k]||0;
+    const pct = total ? Math.round(n/total*100) : 0;
+    const color = k==='alto'?'#C0392B':k==='medio'?'#D4A017':'#5E9E82';
+    return `<div style="margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px">
+        <span>${label}</span><span style="font-weight:500;color:${color}">${n} (${pct}%)</span>
+      </div>
+      <div style="height:8px;background:#EEF0F8;border-radius:4px"><div style="height:100%;width:${pct}%;background:${color};border-radius:4px"></div></div>
+    </div>`;
+  }).join('');
+
+  const estadoLabels = {nuevo:'Sin contactar',contactado:'Contactado',cualificado:'Cualificado',cerrado:'Cerrado',perdido:'Perdido'};
+  const estadoEl = document.getElementById('stats-estado');
+  estadoEl.innerHTML = Object.entries(estados).map(([k,n])=>{
+    const pct = total ? Math.round(n/total*100) : 0;
+    return `<div style="margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px">
+        <span>${estadoLabels[k]||k}</span><span style="font-weight:500">${n} (${pct}%)</span>
+      </div>
+      <div style="height:8px;background:#EEF0F8;border-radius:4px"><div style="height:100%;width:${pct}%;background:var(--blue-mid);border-radius:4px"></div></div>
+    </div>`;
+  }).join('');
+}
+
+// ── FILTERS ──────────────────────────────────────────────────
+function filterLeads(f, btn){
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  renderLeads();
+}
+
+function searchLeads(q){
+  currentSearch = q.toLowerCase();
+  renderLeads();
+}
+
+function applyFilters(){
+  filteredLeads = allLeads.filter(l=>{
+    const matchFilter = currentFilter==='todos' || 
+      (currentFilter==='nuevo' && l.estado==='nuevo') ||
+      (currentFilter==='alto' && l.nivel==='alto') ||
+      (currentFilter==='contactado' && l.estado==='contactado');
+    const matchSearch = !currentSearch || l.email.toLowerCase().includes(currentSearch);
+    return matchFilter && matchSearch;
+  });
+}
+
+// ── ACTIONS ──────────────────────────────────────────────────
+function updateEstado(idx, val){
+  allLeads[idx].estado = val;
+  renderKPIs();
+  updateEstadoRemoto(allLeads[idx].id, val);
+}
+
+function updateNota(idx, val){
+  allLeads[idx].nota = val;
+  updateNotaRemota(allLeads[idx].id, val);
+}
+
+function exportCSV(){
+  const rows = [['Fecha','Email','Score','Nivel','Estado','Notas']];
+  allLeads.forEach(l=>rows.push([l.fecha,l.email,l.score,l.nivel,l.estado,l.nota]));
+  const csv = rows.map(r=>r.map(v=>`"${v}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download = 'delens_leads_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+}
+
+// ── APPS SCRIPT URL ─────────────────────────────────────────
+// Pega aquí la URL que genera Google Apps Script al desplegarlo
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzPGvKvrobK9_xA9L6xmTUfTBVD6gTmsw9LXolk0CeXOPm8YeGE2EmbHPFLsrRowin20g/exec'; // <-- PEGAR URL AQUÍ
+
+async function syncSheets(){
+  if(!APPS_SCRIPT_URL){
+    alert('Pendiente: pega la URL del Apps Script en el código del CRM.\nVer instrucciones en delens_apps_script.js');
+    return;
+  }
+  try {
+    const btn = event.currentTarget;
+    btn.textContent = '↻ Cargando...';
+    btn.disabled = true;
+
+    const [leadsRes, abandonosRes] = await Promise.all([
+      fetch(APPS_SCRIPT_URL + '?action=leads').then(r=>r.json()),
+      fetch(APPS_SCRIPT_URL + '?action=abandonos').then(r=>r.json())
+    ]);
+
+    if(leadsRes.ok && leadsRes.leads.length > 0){
+      allLeads = leadsRes.leads.map(l=>({
+        ...l,
+        score: parseFloat(l.score),
+        nota: l.nota || '',
+        estado: l.estado || 'nuevo'
+      }));
+      filteredLeads = [...allLeads];
+      renderAll();
+    }
+
+    btn.textContent = '↻ Sincronizar Sheets';
+    btn.disabled = false;
+  } catch(err) {
+    alert('Error al conectar con Google Sheets: ' + err.message);
+  }
+}
+
+async function updateEstadoRemoto(id, estado){
+  if(!APPS_SCRIPT_URL) return;
+  try {
+    await fetch(APPS_SCRIPT_URL, {
+      method:'POST',
+      body: JSON.stringify({action:'actualizar_estado', id, estado})
+    });
+  } catch(e){ /* silencioso */ }
+}
+
+async function updateNotaRemota(id, nota){
+  if(!APPS_SCRIPT_URL) return;
+  try {
+    await fetch(APPS_SCRIPT_URL, {
+      method:'POST',
+      body: JSON.stringify({action:'actualizar_nota', id, nota})
+    });
+  } catch(e){ /* silencioso */ }
+}
+</script>
+</body>
+</html>
