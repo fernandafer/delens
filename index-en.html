@@ -282,10 +282,10 @@ footer a:hover{color:rgba(255,255,255,0.7)}
   .hero-left h1 { font-weight: 500 !important; font-size: 34px; }
   .step-title, .resultado-title { font-weight: 400 !important; }
   .hero-tagline { font-weight: 400 !important; font-style: italic; }
-  .hero-sub { font-weight: 300 !important; font-size: 15px; line-height: 1.7; }
+  .hero-sub { font-weight: 300 !important; font-size: 17px; line-height: 1.7; }
   .servicio h3 { font-weight: 500 !important; }
   .sobre-content h2 { font-weight: 400 !important; font-size: 28px; }
-  .pain-item p { font-weight: 400 !important; font-size: 14px; }
+  .pain-item p { font-weight: 400 !important; font-size: 16px; }
   nav .logo-name { font-weight: 400 !important; }
 
   /* HERO */
@@ -293,13 +293,24 @@ footer a:hover{color:rgba(255,255,255,0.7)}
   .hero-right { display: none; }
   .hero-left h1 { font-size: 36px; }
   .hero-tagline { font-size: 20px; }
-  .hero-sub { font-size: 14px; }
+  .hero-sub { font-size: 17px; }
   .btn-primary, .btn-secondary { padding: 12px 20px; font-size: 13px; }
 
   /* TEST STRIP */
   .test-cta-section { padding: 28px 24px; }
   .test-cta-inner { flex-direction: column; gap: 20px; text-align: center; }
   .test-cta-left h2 { font-size: 20px; }
+
+  /* MOBILE FONT IMPROVEMENTS */
+  .problema p { font-size: 17px; }
+  .servicio-desc { font-size: 16px; }
+  .sobre-content p { font-size: 17px; }
+  .step-body strong { font-size: 15px; }
+  .step-body p { font-size: 14px; }
+  .servicios-header p { font-size: 16px; }
+  .cta-final p { font-size: 17px; }
+  .test-section p { font-size: 16px; }
+  .tray-item span { font-size: 15px; }
 
   /* PROBLEMA */
   .problema { padding: 56px 24px; }
@@ -358,13 +369,52 @@ footer a:hover{color:rgba(255,255,255,0.7)}
 }
 
 </style>
-  <meta name="description" content="DELENS — Strategic advisory for businesses, freelancers and scaleups. Clarity, focus and decisions that drive growth. Fernanda Rodríguez, business advisor and strategic consultant and business expert with 30+ years in management, marketing and business development.">
-  <meta name="keywords" content="strategic advisor, business advisor, business consultant, strategic clarity, business decisions, growth strategy, scaleup, SME, marketing strategy, management, leadership, business mentor, DELENS, Fernanda Rodriguez">
+  <meta name="description" content="DELENS — Strategic consulting for CEOs and senior leaders of growing SMEs. Clarity and judgment to make the decisions that actually move the business. Fernanda Rodríguez, 30+ years in strategy and business development.">
   <meta name="author" content="Fernanda Rodríguez — DELENS">
   <meta property="og:title" content="DELENS — Decisions that move businesses">
   <meta property="og:description" content="Strategic advisor for businesses, freelancers and scaleups. Clarity and focus for the decisions that matter.">
   <meta property="og:url" content="https://delens.es">
   <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://delens.es/index-en.html">
+  <link rel="alternate" hreflang="es" href="https://delens.es/">
+  <link rel="alternate" hreflang="en" href="https://delens.es/index-en.html">
+  <meta property="og:image" content="https://delens.es/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="en_GB">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="DELENS — Decisions that move businesses">
+  <meta name="twitter:description" content="Strategic consulting for CEOs and senior leaders of growing SMEs. Clarity for the decisions that matter.">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Person",
+        "@id": "https://delens.es/#fernanda",
+        "name": "Fernanda Rodríguez García",
+        "jobTitle": "Strategic Consultant and Fractional CMO",
+        "description": "Senior executive with 30+ years in strategy, marketing and business development. Founder of DELENS.",
+        "url": "https://delens.es",
+        "sameAs": ["https://www.linkedin.com/in/fernandarodriguezgarcia/"]
+      },
+      {
+        "@type": "ProfessionalService",
+        "@id": "https://delens.es/#delens",
+        "name": "DELENS",
+        "description": "Strategic consulting for CEOs and senior leadership teams of growing SMEs. Specialised in strategic clarity and decision-making.",
+        "url": "https://delens.es/index-en.html",
+        "founder": {"@id": "https://delens.es/#fernanda"},
+        "areaServed": {"@type": "Country", "name": "Spain"},
+        "serviceType": ["Strategic consulting", "Fractional CMO", "Strategic decision-making"],
+        "address": {"@type": "PostalAddress", "addressCountry": "ES", "addressRegion": "Madrid"},
+        "inLanguage": "en",
+        "knowsAbout": ["Business strategy", "Decision making", "Strategic marketing", "Business development", "SMEs"]
+      }
+    ]
+  }
+  </script>
 </head>
 <!-- Google Tag Manager (noscript) -->
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-NKR4GRSJ" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
@@ -468,7 +518,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <p>2 minutes. 7 questions. Instant result.</p>
     </div>
     <div class="test-cta-right">
-      <a href="delens_test_en.html" class="btn-test-inline">Take the test →</a>
+      <a href="delens_test.html" class="btn-test-inline">Take the test →</a>
       <span class="test-cta-note">No sign-up · Instant result</span>
     </div>
   </div>
@@ -510,7 +560,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="test-card-label">diagnóstico</div>
       </div>
     </div>
-    <a href="delens_test_en.html" class="btn-test">Hacer el diagnóstico gratuito →</a>
+    <a href="delens_test.html" class="btn-test">Hacer el diagnóstico gratuito →</a>
     <p class="test-legal">Sin spam. Solo tu resultado.</p>
   </div>
 </section>
