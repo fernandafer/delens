@@ -169,9 +169,25 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
   <!-- STEP 0: BLOQUE A - SALUD DEL NEGOCIO -->
   <div class="card" id="step-0">
-    <div class="step-tag">Test de claridad estratégica · 2 minutos</div>
-    <h1 class="step-title">¿Está tu negocio bloqueado?</h1>
-    <p class="step-sub">7 preguntas para medir tu nivel de claridad estratégica. Resultado inmediato y diagnóstico personalizado.</p>
+    <div id="step0-intro">
+      <div class="step-tag">Test de claridad estratégica · 5 minutos</div>
+      <h1 class="step-title">¿Por qué algunas empresas tardan meses en decidir?</h1>
+      <p class="step-sub" style="margin-bottom:6px">No suele ser por falta de información.<br>Suele ser porque...</p>
+      <ul style="margin:0 0 22px 20px;padding:0;color:var(--text-light);font-size:14px;font-weight:300;line-height:1.9">
+        <li>hay demasiadas prioridades</li>
+        <li>demasiadas opiniones</li>
+        <li>demasiado ruido</li>
+      </ul>
+      <p class="step-sub">En Delens ayudamos a separar lo importante de lo urgente.<br>Empieza con un Test de Claridad Estratégica. En menos de 5 minutos descubrirás cuál puede ser hoy el principal bloqueo para tomar mejores decisiones.</p>
+      <div class="nav-btns">
+        <button class="btn btn-primary" onclick="document.getElementById('step0-intro').style.display='none';document.getElementById('step0-questions').style.display='block'" style="margin-left:auto">Empezar test →</button>
+      </div>
+    </div>
+
+    <div id="step0-questions" style="display:none">
+    <div class="step-tag">Bloque A · Salud del negocio</div>
+    <h2 class="step-title">¿Cómo está tu negocio ahora mismo?</h2>
+    <p class="step-sub">Del 1 al 5. Sin pensarlo demasiado — la primera respuesta suele ser la más honesta.</p>
 
     <div class="question">
       <div class="q-text">Ventas en el último año</div>
@@ -211,6 +227,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
     <div class="nav-btns">
       <button class="btn btn-primary" onclick="nextStep()" style="margin-left:auto">Siguiente →</button>
+    </div>
     </div>
   </div>
 
