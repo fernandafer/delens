@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-  <script id="Cookiebot" src="https://consent.cookiebot.com/uc.js" data-cbid="ffb1e8b5-4889-4a69-9f89-e5ff71cb7aa6" data-blockingmode="auto" type="text/javascript"></script>
+  <script id="Cookiebot" data-culture="es" src="https://consent.cookiebot.com/uc.js" data-cbid="ffb1e8b5-4889-4a69-9f89-e5ff71cb7aa6" data-blockingmode="auto" type="text/javascript"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DELENS · Aviso Legal</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet">
@@ -22,6 +22,11 @@ p,li{font-size:14px;font-weight:300;color:#444;line-height:1.85;margin-bottom:12
 ul{padding-left:20px;margin-bottom:12px}
 a{color:#1C3A7A}
 footer{background:#122660;padding:24px 40px;text-align:center;font-size:12px;color:rgba(255,255,255,0.35)}
+
+#CybotCookiebotDialog{position:fixed!important;top:auto!important;bottom:0!important;left:0!important;right:0!important;transform:none!important;width:100%!important;max-width:100%!important;max-height:60vh!important;border-radius:12px 12px 0 0!important;margin:0!important}
+@media (min-width:768px){#CybotCookiebotDialog{max-height:40vh!important}}
+#CybotCookiebotDialogBodyContentText{font-size:13px!important;max-height:80px!important;overflow-y:auto!important}
+@media (min-width:600px){#CybotCookiebotDialogBodyButtons{display:flex!important;flex-direction:row!important;gap:8px!important}}
 </style>
 </head>
 <body>
@@ -46,7 +51,7 @@ footer{background:#122660;padding:24px 40px;text-align:center;font-size:12px;col
   <p>En cumplimiento del artículo 10 de la Ley 34/2002, de 11 de julio, de Servicios de la Sociedad de la Información y Comercio Electrónico (LSSICE), se informa:</p>
   <ul>
     <li><strong>Titular:</strong> Fernanda Rodríguez García</li>
-    <li><strong>NIF:</strong> 50318422B</li>
+    <li><strong>NIF:</strong> <span id="nif-holder">&nbsp;</span></li>
     <li><strong>Actividad:</strong> Consultoría y asesoramiento estratégico de negocios</li>
     <li><strong>Domicilio:</strong> Madrid, España</li>
     <li><strong>Email:</strong> <a href="mailto:fernanda@delens.es">fernanda@delens.es</a></li>
@@ -75,5 +80,12 @@ footer{background:#122660;padding:24px 40px;text-align:center;font-size:12px;col
 </div>
 
 <footer>© 2026 Fernanda Rodríguez García · DELENS · <a href="legal.html" style="color:rgba(255,255,255,0.4)">Aviso legal</a> · <a href="privacidad.html" style="color:rgba(255,255,255,0.4)">Privacidad</a></footer>
+<script>
+(function(){
+  var p = ['5','0','3','1','8','4','2','2','B'];
+  var el = document.getElementById('nif-holder');
+  if (el) el.textContent = p.join('');
+})();
+</script>
 </body>
 </html>
