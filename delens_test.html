@@ -348,12 +348,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 <script>
 // ── CONFIG ────────────────────────────────────────────────────
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzPGvKvrobK9_xA9L6xmTUfTBVD6gTmsw9LXolk0CeXOPm8YeGE2EmbHPFLsrRowin20g/exec'; // <-- PEGAR URL DEL APPS SCRIPT AQUÍ
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzPGvKvrobK9_xA9L6xmTUfTBVD6gTmsw9LXolk0CeXOPm8YeGE2EmbHPFLsrRowin20g/exec';
 
 // ── STATE ─────────────────────────────────────────────────────
 let currentStep = 0;
 let email = '';
-const answers = { A1:0,A2:0,A5:0, B1:null,B2:null,B3:null, C1:null,C2:null };
+const answers = { A1:0,A2:0,A5:0, B1:null,B2:null,B3:null,B4:null, C1:null,C2:null };
 const TOTAL_STEPS = 5;
 const PROGRESS = [10, 30, 55, 78, 100];
 
@@ -385,6 +385,10 @@ function nextStep(){
   if(currentStep===0){
     const pending = ['A1','A2','A5'].filter(k=>answers[k]===0);
     if(pending.length){ alert('Responde todas las preguntas para continuar.'); return; }
+  }
+  if(currentStep===1){
+    const pending = ['B1','B2','B3','B4'].filter(k=>!choiceAnswered[k]);
+    if(pending.length){ alert('Responde las cuatro preguntas para continuar.'); return; }
   }
   if(currentStep===2){
     if(!choiceAnswered['C1'] || !choiceAnswered['C2']){
@@ -418,32 +422,28 @@ function selectChoice(q, val, btn){
 }
 
 // ── CÁLCULO ───────────────────────────────────────────────────
+// Score de BLOQUEO: 1 = sin bloqueo, 10 = bloqueo máximo.
+// Coherente con Apps Script y CRM (>=7 alto, >=5 medio, <5 bajo).
 function calcularYMostrar(){
-  // Validar bloque C
-  if(!choiceAnswered['C1'] || !choiceAnswered['C2']){
-    alert('Responde las dos preguntas para ver tu diagnóstico.');
+  const obligatorias = ['B1','B2','B3','B4','C1','C2'];
+  if(obligatorias.some(k=>!choiceAnswered[k]) || ['A1','A2','A5'].some(k=>!answers[k])){
+    alert('Faltan respuestas. Revisa los bloques anteriores.');
     return;
   }
 
-  // Bloque A (35%) — 3 preguntas, invertido: 5=bueno=más claridad
-  const avgA = ((answers.A1||3) + (answers.A2||3) + (answers.A5||3)) / 3;
-  const scoreA = avgA / 5;
+  // Bloque A (35%) — salud: escala 1-5 → 0 (débil) a 1 (sólida)
+  const saludA = ((answers.A1 + answers.A2 + answers.A5) / 3 - 1) / 4;
+  // Bloque B (45%) — bloqueo decisional: 4 preguntas 0-3 → 0 a 1
+  const bloqueoB = (answers.B1 + answers.B2 + answers.B3 + answers.B4) / 12;
+  // Bloque C (20%) — dependencia: 2 preguntas 0-3 → 0 a 1
+  const dependenciaC = (answers.C1 + answers.C2) / 6;
 
-  // Bloque B (45%) — decisiones, 0=bien 3=mal, invertido
-  const avgB = ((answers.B1||0) + (answers.B2||0) + (answers.B3||0)) / 3;
-  const scoreB = 1 - (avgB / 3);
+  const bloqueo = (1 - saludA)*0.35 + bloqueoB*0.45 + dependenciaC*0.20;
+  const score = Math.round((1 + 9*bloqueo) * 10) / 10;
 
-  // Bloque C (20%) — dependencia, invertido
-  const avgC = ((answers.C1||0) + (answers.C2||0)) / 2;
-  const scoreC = 1 - (avgC / 3);
-
-  // Score final 1-10
-  const raw = scoreA*0.35 + scoreB*0.45 + scoreC*0.20;
-  const score = Math.round(Math.min(10, Math.max(1, raw*10))*10)/10;
-
-  const bloqueA_pct = Math.round(scoreA*100);
-  const bloqueB_pct = Math.round(scoreB*100);
-  const bloqueC_pct = Math.round(scoreC*100);
+  const pctSalud = Math.round(saludA*100);
+  const pctB = Math.round(bloqueoB*100);
+  const pctC = Math.round(dependenciaC*100);
 
   const nivel_bloqueo = score >= 7 ? 'alto' : score >= 5 ? 'medio' : 'bajo';
 
@@ -454,14 +454,18 @@ function calcularYMostrar(){
     score_test: score
   });
 
-  mostrarResultado(score, bloqueA_pct, bloqueB_pct, bloqueC_pct);
-  enviarLead(email, score, scoreA*10, scoreB*10, scoreC*10);
+  mostrarResultado(score, pctSalud, pctB, pctC);
+  // Bloques enviados en sentido "bloqueo" (0-10, más alto = peor)
+  enviarLead(email, score, (1 - saludA)*10, bloqueoB*10, dependenciaC*10);
   currentStep = 4;
   showStep(4);
 }
 
 // ── RESULTADO ─────────────────────────────────────────────────
-function mostrarResultado(score, pctA, pctB, pctC){
+function colorBloqueo(p){ return p>60 ? '#C0392B' : p>40 ? '#D4A017' : '#5E9E82'; }
+function colorSalud(p){ return p<40 ? '#C0392B' : p<60 ? '#D4A017' : '#5E9E82'; }
+
+function mostrarResultado(score, pctSalud, pctB, pctC){
   let color, nivel, titulo, texto, ctaTitulo, ctaTexto;
 
   if(score >= 7){
@@ -498,16 +502,16 @@ function mostrarResultado(score, pctA, pctB, pctC){
 
     <div class="resultado-bars">
       <div class="bar-item">
-        <div class="bar-label"><span>Salud del negocio</span><span style="font-weight:500">${100-pctA}%</span></div>
-        <div class="bar-track"><div class="bar-fill" style="width:${100-pctA}%;background:#5E9E82"></div></div>
+        <div class="bar-label"><span>Salud del negocio</span><span style="font-weight:500;color:${colorSalud(pctSalud)}">${pctSalud}%</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:${pctSalud}%;background:${colorSalud(pctSalud)}"></div></div>
       </div>
       <div class="bar-item">
-        <div class="bar-label"><span>Bloqueo decisional</span><span style="font-weight:500;color:${pctB>60?'#C0392B':pctB>40?'#D4A017':'#5E9E82'}">${pctB}%</span></div>
-        <div class="bar-track"><div class="bar-fill" style="width:${pctB}%;background:${pctB>60?'#C0392B':pctB>40?'#D4A017':'#5E9E82'}"></div></div>
+        <div class="bar-label"><span>Bloqueo decisional</span><span style="font-weight:500;color:${colorBloqueo(pctB)}">${pctB}%</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:${pctB}%;background:${colorBloqueo(pctB)}"></div></div>
       </div>
       <div class="bar-item">
-        <div class="bar-label"><span>Dependencia del empresario</span><span style="font-weight:500;color:${pctC>60?'#C0392B':pctC>40?'#D4A017':'#5E9E82'}">${pctC}%</span></div>
-        <div class="bar-track"><div class="bar-fill" style="width:${pctC}%;background:${pctC>60?'#C0392B':pctC>40?'#D4A017':'#5E9E82'}"></div></div>
+        <div class="bar-label"><span>Dependencia del empresario</span><span style="font-weight:500;color:${colorBloqueo(pctC)}">${pctC}%</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:${pctC}%;background:${colorBloqueo(pctC)}"></div></div>
       </div>
     </div>
 
