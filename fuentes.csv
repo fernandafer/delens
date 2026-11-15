@@ -1,0 +1,23 @@
+Fuente,Dominio,Territorio,Keywords,Frecuencia,Prioridad,Max,Requiere,Excluir
+Comunidad de Madrid - Inversión y empresa,comunidad.madrid/notas-prensa|comunidad.madrid/noticias,Madrid,"autónomos OR pymes OR empresas OR emprendedores OR ayudas OR inversión",semanal,1,3,autonom|pyme|empresa|emprend|ayuda|subvenci|inversi|avalmadrid,
+Sede electrónica Comunidad de Madrid,sede.comunidad.madrid,Madrid,"(ayudas OR subvenciones) (autónomos OR emprendedores OR empresas OR pymes)",semanal,1,3,autonom|pyme|empresa|emprend,
+Observatorio Económico Ayuntamiento de Madrid,observatorioeconomico.madrid.es,Madrid,"""Barómetro de Economía""",semanal,1,1,barometro,
+Avalmadrid,avalmadrid.es,Madrid,"línea OR financiación OR avales OR convenio",semanal,1,2,linea|financiacion|aval|convenio|prestamo,
+CEIM,ceim.es,Madrid,"informe OR barómetro OR encuesta OR estudio OR indicador",semanal,1,2,informe|barometro|encuesta|estudio|datos|indicador|observatorio,pide|reclama|critica|exige|denuncia|censura|lamenta
+Cifras PYME,ipyme.org,Situación pyme,"""Cifras PYME""",semanal,2,1,cifras ?pyme,
+Banco de España - EBAE,bde.es,Situación pyme,"EBAE OR ""Encuesta a las empresas españolas sobre la evolución de su actividad""",semanal,2,1,ebae|encuesta a las empresas,
+CEPYME,cepyme.es,Situación pyme,"""Observatorio de Morosidad"" OR indicador OR ""Situación de la Pyme"" OR empleo OR boletín",semanal,2,2,morosidad|indicador|situacion de la pyme|empleo|boletin|observatorio|informe,
+ATA,ata.es,Autónomos,"barómetro",semanal,2,1,barometro,
+Consejo General de Gestores Administrativos,consejogestores.org,Situación pyme,"barómetro",semanal,2,1,barometro,
+Pymes y Autónomos,pymesyautonomos.com,Ayudas y normativa,"normativa OR Hacienda OR IVA OR IRPF OR cotización OR ""Seguridad Social"" OR ayudas OR subvención OR trámite OR factura",semanal,2,3,normativ|hacienda|iva|irpf|cotiza|seguridad social|ayuda|subvenci|tramite|factura|verifactu|impuesto|modelo \d|deduc|cuota|ley\b,
+Gartner Newsroom,gartner.com/en/newsroom,IA y decisión,"AI OR agentic OR agents OR CEO OR CFO OR strategy OR ""decision""",semanal,2,3,,symposium|xpo|conference|summit|webinar|magic quadrant|award
+Gartner Artículos,gartner.com/en/articles,IA y decisión,"AI OR agentic OR ROI OR strategy OR CEO OR leadership",semanal,2,2,,symposium|xpo|conference|summit|webinar|magic quadrant|award
+ONTSI,ontsi.es,IA y decisión,"empresas OR pymes OR ""inteligencia artificial""",semanal,2,2,,
+Emprendedores,emprendedores.es,Autónomos / Situación pyme,"autónomos OR pymes OR empresas OR ""inteligencia artificial""",semanal,3,2,autonom|pyme|empresa|inteligencia artificial|\bia\b,
+OCDE Pymes,oecd.org,Situación pyme,"(SME OR SMEs OR ""small and medium"") (Spain OR ""European Union"" OR EU)",semanal,3,1,spain|spanish|european union|\beu\b|euro area|espana|union europea,
+Círculo de Empresarios,circulodeempresarios.org,Empresa mediana,"""empresa mediana"" OR ""tamaño intermedio"" OR informe",semanal,3,1,,
+Comisión Europea Pymes,single-market-economy.ec.europa.eu,Situación pyme,"SME OR SMEs",semanal,3,1,,
+Census Bureau (EE. UU.),census.gov,IA y decisión,"""Business Trends and Outlook"" AI",semanal,4,1,,
+NFIB,nfib.com,Situación pyme,"AI OR technology OR ""Small Business Economic Trends""",semanal,4,1,,
+US Chamber of Commerce,uschamber.com,Situación pyme,"""small business"" AI",semanal,4,1,,
+Fed Small Business,fedsmallbusiness.org,Situación pyme,,semanal,4,1,,
