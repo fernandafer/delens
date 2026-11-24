@@ -354,7 +354,7 @@ const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxai0--V3jkd_2r
 // ── STATE ─────────────────────────────────────────────────────
 let currentStep = 0;
 let email = '';
-const answers = { A1:0,A2:0,A5:0, B1:null,B2:null,B3:null, C1:null,C2:null };
+const answers = { A1:0,A2:0,A5:0, B1:null,B2:null,B3:null,B4:null, C1:null,C2:null };
 const TOTAL_STEPS = 5;
 const PROGRESS = [10, 30, 55, 78, 100];
 
@@ -386,6 +386,12 @@ function nextStep(){
   if(currentStep===0){
     const pending = ['A1','A2','A5'].filter(k=>answers[k]===0);
     if(pending.length){ alert('Responde todas las preguntas para continuar.'); return; }
+  }
+  if(currentStep===1){
+    if(!['B1','B2','B3','B4'].every(k=>choiceAnswered[k])){
+      alert('Responde todas las preguntas para continuar.');
+      return;
+    }
   }
   if(currentStep===2){
     if(!choiceAnswered['C1'] || !choiceAnswered['C2']){
@@ -426,25 +432,26 @@ function calcularYMostrar(){
     return;
   }
 
-  // Bloque A (35%) — 3 preguntas, invertido: 5=bueno=más claridad
-  const avgA = ((answers.A1||3) + (answers.A2||3) + (answers.A5||3)) / 3;
-  const scoreA = avgA / 5;
+  // Todo se calcula en sentido BLOQUEO: 0 = sin bloqueo, 1 = bloqueo máximo
+  // Bloque A (35%) — salud del negocio. Respuestas 1 (mal) a 5 (bien)
+  const avgA = (answers.A1 + answers.A2 + answers.A5) / 3;
+  const bloqueoA = (5 - avgA) / 4;
 
-  // Bloque B (45%) — decisiones, 0=bien 3=mal, invertido
-  const avgB = ((answers.B1||0) + (answers.B2||0) + (answers.B3||0)) / 3;
-  const scoreB = 1 - (avgB / 3);
+  // Bloque B (45%) — decisiones. Respuestas 0 (bien) a 3 (mal)
+  const avgB = (answers.B1 + answers.B2 + answers.B3 + answers.B4) / 4;
+  const bloqueoB = avgB / 3;
 
-  // Bloque C (20%) — dependencia, invertido
-  const avgC = ((answers.C1||0) + (answers.C2||0)) / 2;
-  const scoreC = 1 - (avgC / 3);
+  // Bloque C (20%) — dependencia del empresario. Respuestas 0 (bien) a 3 (mal)
+  const avgC = (answers.C1 + answers.C2) / 2;
+  const bloqueoC = avgC / 3;
 
-  // Score final 1-10
-  const raw = scoreA*0.35 + scoreB*0.45 + scoreC*0.20;
-  const score = Math.round(Math.min(10, Math.max(1, raw*10))*10)/10;
+  // Score de bloqueo de 1 (sin bloqueo) a 10 (bloqueo máximo)
+  const raw = bloqueoA*0.35 + bloqueoB*0.45 + bloqueoC*0.20;
+  const score = Math.round((1 + raw*9)*10)/10;
 
-  const bloqueA_pct = Math.round(scoreA*100);
-  const bloqueB_pct = Math.round(scoreB*100);
-  const bloqueC_pct = Math.round(scoreC*100);
+  const salud_pct   = Math.round((1 - bloqueoA)*100); // alto = negocio sano
+  const bloqueoB_pct = Math.round(bloqueoB*100);       // alto = mucho bloqueo
+  const bloqueoC_pct = Math.round(bloqueoC*100);       // alto = mucha dependencia
 
   const nivel_bloqueo = score >= 7 ? 'alto' : score >= 5 ? 'medio' : 'bajo';
 
@@ -455,8 +462,8 @@ function calcularYMostrar(){
     score_test: score
   });
 
-  mostrarResultado(score, bloqueA_pct, bloqueB_pct, bloqueC_pct);
-  enviarLead(email, score, scoreA*10, scoreB*10, scoreC*10);
+  mostrarResultado(score, salud_pct, bloqueoB_pct, bloqueoC_pct);
+  enviarLead(email, score, bloqueoA*10, bloqueoB*10, bloqueoC*10);
   currentStep = 4;
   showStep(4);
 }
@@ -499,8 +506,8 @@ function mostrarResultado(score, pctA, pctB, pctC){
 
     <div class="resultado-bars">
       <div class="bar-item">
-        <div class="bar-label"><span>Salud del negocio</span><span style="font-weight:500">${100-pctA}%</span></div>
-        <div class="bar-track"><div class="bar-fill" style="width:${100-pctA}%;background:#5E9E82"></div></div>
+        <div class="bar-label"><span>Salud del negocio</span><span style="font-weight:500">${pctA}%</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:${pctA}%;background:#5E9E82"></div></div>
       </div>
       <div class="bar-item">
         <div class="bar-label"><span>Bloqueo decisional</span><span style="font-weight:500;color:${pctB>60?'#C0392B':pctB>40?'#D4A017':'#5E9E82'}">${pctB}%</span></div>
