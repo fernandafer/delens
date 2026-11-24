@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
 <title>DELENS · CRM Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500&family=Cormorant+Garamond:wght@300;400&display=swap" rel="stylesheet">
 <style>
@@ -203,7 +204,8 @@ tr:hover td{background:#FAFBFE}
     <button class="mobile-nav-btn active" onclick="showSection('leads');updateMobileNav(this)">◎ Leads</button>
     <button class="mobile-nav-btn" onclick="showSection('abandonos');updateMobileNav(this)">◌ Abandonos</button>
     <button class="mobile-nav-btn" onclick="showSection('stats');updateMobileNav(this)">▦ Stats</button>
-    <button class="mobile-nav-btn" onclick="syncSheets()" style="margin-left:auto;background:var(--sage)">↻ Sync</button>
+    <button class="mobile-nav-btn sync-btn" onclick="syncSheets()" style="margin-left:auto;background:var(--sage)">↻ Sync</button>
+    <button class="mobile-nav-btn" onclick="logout()">Salir</button>
   </div>
   <div class="sidebar">
     <div class="sidebar-logo">
@@ -216,11 +218,11 @@ tr:hover td{background:#FAFBFE}
       <span>DELENS</span>
     </div>
     <nav>
-      <div class="nav-item active" onclick="showSection('leads')"><span class="nav-icon">◎</span> Leads</div>
-      <div class="nav-item" onclick="showSection('abandonos')"><span class="nav-icon">◌</span> Abandonos</div>
-      <div class="nav-item" onclick="showSection('stats')"><span class="nav-icon">▦</span> Estadísticas</div>
+      <div class="nav-item active" data-sec="leads" onclick="showSection('leads')"><span class="nav-icon">◎</span> Leads</div>
+      <div class="nav-item" data-sec="abandonos" onclick="showSection('abandonos')"><span class="nav-icon">◌</span> Abandonos</div>
+      <div class="nav-item" data-sec="stats" onclick="showSection('stats')"><span class="nav-icon">▦</span> Estadísticas</div>
     </nav>
-    <div class="sidebar-footer">DELENS · Uso privado<br>fernanda@delens.es</div>
+    <div class="sidebar-footer">DELENS · Uso privado<br>fernanda@delens.es<br><a href="#" onclick="logout();return false" style="color:rgba(255,255,255,0.5)">Cerrar sesión</a></div>
   </div>
 
   <div class="main">
@@ -234,7 +236,7 @@ tr:hover td{background:#FAFBFE}
         </div>
         <div class="header-actions">
           <button class="btn btn-outline" onclick="exportCSV()">Exportar CSV</button>
-          <button class="btn btn-primary" onclick="syncSheets()">↻ Sincronizar Sheets</button>
+          <button class="btn btn-primary sync-btn" onclick="syncSheets()">↻ Sincronizar Sheets</button>
         </div>
       </div>
 
@@ -343,57 +345,82 @@ tr:hover td{background:#FAFBFE}
 </div>
 
 <script>
-// ── DATOS DEMO ──────────────────────────────────────────────
-const LEADS_DEMO = [
-  {fecha:'2026-05-28',email:'miguel.torres@constructora-mt.es',score:8.4,nivel:'alto',estado:'nuevo',nota:''},
-  {fecha:'2026-05-27',email:'ana.garcia@textilgarcia.com',score:7.1,nivel:'alto',estado:'contactado',nota:'Llamada el 28/5. Interesada en ongoing.'},
-  {fecha:'2026-05-26',email:'javier.ruiz@distribuciones-jr.es',score:5.8,nivel:'medio',estado:'nuevo',nota:''},
-  {fecha:'2026-05-25',email:'laura.martin@cafeteriaslm.com',score:4.2,nivel:'bajo',estado:'contactado',nota:'No momento ahora. Recontactar sept.'},
-  {fecha:'2026-05-24',email:'pablo.fernandez@pf-servicios.es',score:9.1,nivel:'alto',estado:'cualificado',nota:'Muy interesado. Propuesta enviada.'},
-  {fecha:'2026-05-23',email:'carmen.lopez@academiacl.es',score:6.3,nivel:'medio',estado:'nuevo',nota:''},
-  {fecha:'2026-05-22',email:'antonio.diaz@talleres-diaz.com',score:3.1,nivel:'bajo',estado:'cerrado',nota:'No encaja perfil.'},
-  {fecha:'2026-05-21',email:'isabel.sanchez@isabelsan.es',score:7.8,nivel:'alto',estado:'cualificado',nota:'Decision Lens. Reunión 3 junio.'},
-];
+// ── CONFIG ──────────────────────────────────────────────────
+// La URL del Apps Script puede ser pública: sin la clave no devuelve datos.
+// La clave NO está en este archivo: se guarda en Apps Script (Propiedades del script → CRM_KEY).
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxai0--V3jkd_2rlYuqh3IN4gBMIPYhzENyDJhIGcMA0YPXoQ6X82pCILOixctM0oUFHw/exec';
 
-const ABANDONOS_DEMO = [
-  {fecha:'2026-05-28',email:'info@empresa-xyz.com',paso:'Bloque B'},
-  {fecha:'2026-05-27',email:'contacto@negocio-abc.es',paso:'Bloque A'},
-  {fecha:'2026-05-26',email:'hola@startupdef.com',paso:'Bloque C'},
-  {fecha:'2026-05-25',email:'admin@comercialgh.es',paso:'Bloque A'},
-];
-
-let allLeads = [...LEADS_DEMO];
-let filteredLeads = [...allLeads];
+let crmKey = '';
+let allLeads = [];
+let allAbandonos = [];
+let filteredLeads = [];
 let currentFilter = 'todos';
 let currentSearch = '';
+let syncTimer = null;
+
+// ── UTILIDADES ──────────────────────────────────────────────
+// Escapa texto antes de pintarlo (evita que un lead malicioso inyecte código en tu CRM)
+function esc(v){
+  return String(v == null ? '' : v)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+async function api(action, extra){
+  const res = await fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    body: JSON.stringify(Object.assign({ action, key: crmKey }, extra || {}))
+  });
+  return res.json();
+}
 
 // ── AUTH ─────────────────────────────────────────────────────
-
-// Auto-sincronizar al abrir si hay URL configurada
-function autoSync(){
-  if(APPS_SCRIPT_URL){
-    syncSheets();
-    // Refresh cada 5 minutos
-    setInterval(syncSheets, 5 * 60 * 1000);
-  } else {
-    renderAll();
+async function checkPwd(){
+  const input = document.getElementById('pwd-input');
+  const err = document.getElementById('login-error');
+  err.style.display = 'none';
+  crmKey = input.value;
+  try {
+    const r = await api('login');
+    if(!r.ok) throw new Error('unauthorized');
+    try { sessionStorage.setItem('crm_key', crmKey); } catch(e){}
+    enterApp();
+  } catch(e){
+    crmKey = '';
+    err.textContent = 'Contraseña incorrecta (o demasiados intentos: espera 15 min)';
+    err.style.display = 'block';
   }
 }
+
+function enterApp(){
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  renderAll();
+  syncSheets();
+  if(syncTimer) clearInterval(syncTimer);
+  syncTimer = setInterval(syncSheets, 5 * 60 * 1000);
+}
+
+function logout(){
+  try { sessionStorage.removeItem('crm_key'); } catch(e){}
+  location.reload();
+}
+
+// Mantener sesión al recargar (solo en esta pestaña)
+(async function(){
+  let saved = '';
+  try { saved = sessionStorage.getItem('crm_key') || ''; } catch(e){}
+  if(!saved) return;
+  crmKey = saved;
+  try {
+    const r = await api('login');
+    if(r.ok) enterApp(); else { crmKey=''; sessionStorage.removeItem('crm_key'); }
+  } catch(e){ crmKey=''; }
+})();
 
 function updateMobileNav(btn){
   document.querySelectorAll('.mobile-nav-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-}
-
-function checkPwd(){
-  const pwd = document.getElementById('pwd-input').value;
-  if(pwd === 'delens2026'){
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('app').style.display = 'block';
-    autoSync();
-  } else {
-    document.getElementById('login-error').style.display = 'block';
-  }
 }
 
 // ── NAVIGATION ───────────────────────────────────────────────
@@ -401,7 +428,8 @@ function showSection(id){
   document.querySelectorAll('.tab-content').forEach(el=>el.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
   document.getElementById('section-'+id).classList.add('active');
-  event.currentTarget.classList.add('active');
+  const nav = document.querySelector('.nav-item[data-sec="'+id+'"]');
+  if(nav) nav.classList.add('active');
   if(id==='stats') renderStats();
 }
 
@@ -416,7 +444,8 @@ function renderKPIs(){
   const total = allLeads.length;
   const nuevos = allLeads.filter(l=>l.estado==='nuevo').length;
   const altos = allLeads.filter(l=>l.nivel==='alto').length;
-  const avgScore = total ? (allLeads.reduce((s,l)=>s+l.score,0)/total).toFixed(1) : '—';
+  const conScore = allLeads.filter(l=>l.score>0);
+  const avgScore = conScore.length ? (conScore.reduce((s,l)=>s+l.score,0)/conScore.length).toFixed(1) : '—';
   document.getElementById('kpi-total').textContent = total;
   document.getElementById('kpi-nuevos').textContent = nuevos;
   document.getElementById('kpi-nuevos-pct').textContent = nuevos ? `${Math.round(nuevos/total*100)}% pendientes` : '';
@@ -433,13 +462,8 @@ function scoreColor(score){
 function nivelBadge(nivel){
   const map = {alto:'nivel-alto',medio:'nivel-medio',bajo:'nivel-bajo'};
   const label = {alto:'Alto',medio:'Medio',bajo:'Bajo'};
-  return `<span class="${map[nivel]}">${label[nivel]}</span>`;
-}
-
-function estadoBadge(estado){
-  const map = {nuevo:'badge-new',contactado:'badge-contacted',cualificado:'badge-qualified',cerrado:'badge-closed',perdido:'badge-lost'};
-  const label = {nuevo:'Sin contactar',contactado:'Contactado',cualificado:'Cualificado',cerrado:'Cerrado',perdido:'Perdido'};
-  return `<span class="badge ${map[estado]||'badge-new'}">${label[estado]||estado}</span>`;
+  if(nivel==='contacto') return '<span class="badge badge-new">Contacto</span>';
+  return map[nivel] ? `<span class="${map[nivel]}">${label[nivel]}</span>` : '<span style="color:var(--gray)">—</span>';
 }
 
 function renderLeads(){
@@ -448,46 +472,50 @@ function renderLeads(){
   document.getElementById('leads-count').textContent = `${filteredLeads.length} de ${allLeads.length}`;
 
   if(!filteredLeads.length){
-    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state">No hay leads con este filtro</div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state">${allLeads.length ? 'No hay leads con este filtro' : 'Sin datos todavía. Pulsa “Sincronizar Sheets”.'}</div></td></tr>`;
     return;
   }
 
-  tbody.innerHTML = filteredLeads.map((l,i)=>{
-    const fill = Math.round(l.score/10*100);
+  const estados = [['nuevo','Sin contactar'],['contactado','Contactado'],['cualificado','Cualificado'],['cerrado','Cerrado'],['perdido','Perdido']];
+  tbody.innerHTML = filteredLeads.map(l=>{
+    const fill = Math.max(0, Math.min(100, Math.round(l.score/10*100)));
     const idx = allLeads.indexOf(l);
+    const nombre = l.nombre ? `<div style="font-size:11px;color:var(--text-light)">${esc(l.nombre)}</div>` : '';
     return `<tr>
-      <td style="color:var(--text-light);font-size:12px">${l.fecha}</td>
-      <td><a href="mailto:${l.email}" style="color:var(--blue);text-decoration:none">${l.email}</a></td>
-      <td>
+      <td style="color:var(--text-light);font-size:12px">${esc(l.fecha)}</td>
+      <td><a href="mailto:${encodeURIComponent(l.email)}" style="color:var(--blue);text-decoration:none">${esc(l.email)}</a>${nombre}</td>
+      <td>${l.nivel==='contacto' ? '<span style="color:var(--gray)">—</span>' : `
         <div class="score-wrap">
           <div class="score-bar"><div class="score-fill" style="width:${fill}%;background:${scoreColor(l.score)}"></div></div>
-          <span class="score-num" style="color:${scoreColor(l.score)}">${l.score}</span>
-        </div>
+          <span class="score-num" style="color:${scoreColor(l.score)}">${esc(l.score)}</span>
+        </div>`}
       </td>
       <td>${nivelBadge(l.nivel)}</td>
       <td>
         <select class="status-select" onchange="updateEstado(${idx},this.value)">
-          <option value="nuevo" ${l.estado==='nuevo'?'selected':''}>Sin contactar</option>
-          <option value="contactado" ${l.estado==='contactado'?'selected':''}>Contactado</option>
-          <option value="cualificado" ${l.estado==='cualificado'?'selected':''}>Cualificado</option>
-          <option value="cerrado" ${l.estado==='cerrado'?'selected':''}>Cerrado</option>
-          <option value="perdido" ${l.estado==='perdido'?'selected':''}>Perdido</option>
+          ${estados.map(([v,t])=>`<option value="${v}" ${l.estado===v?'selected':''}>${t}</option>`).join('')}
         </select>
       </td>
-      <td><input class="note-input" placeholder="Añadir nota..." value="${l.nota}" onblur="updateNota(${idx},this.value)"></td>
+      <td><input class="note-input" placeholder="Añadir nota..." value="${esc(l.nota)}" onblur="updateNota(${idx},this.value)"></td>
     </tr>`;
   }).join('');
 }
 
 function renderAbandonos(){
   const tbody = document.getElementById('abandonos-tbody');
-  document.getElementById('abandonos-count').textContent = `${ABANDONOS_DEMO.length} emails`;
-  tbody.innerHTML = ABANDONOS_DEMO.map(a=>`
+  document.getElementById('abandonos-count').textContent = `${allAbandonos.length} emails`;
+  if(!allAbandonos.length){
+    tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state">Sin abandonos</div></td></tr>`;
+    return;
+  }
+  const asunto = encodeURIComponent('Tu diagnóstico DELENS');
+  const cuerpo = encodeURIComponent('Hola, vi que empezaste el test...');
+  tbody.innerHTML = allAbandonos.map(a=>`
     <tr>
-      <td style="color:var(--text-light);font-size:12px">${a.fecha}</td>
-      <td><a href="mailto:${a.email}" style="color:var(--blue);text-decoration:none">${a.email}</a></td>
-      <td style="color:var(--text-light)">${a.paso}</td>
-      <td><a href="mailto:${a.email}?subject=Tu diagnóstico DELENS&body=Hola, vi que empezaste el test..." style="color:var(--sage);font-size:12px">Recontactar →</a></td>
+      <td style="color:var(--text-light);font-size:12px">${esc(a.fecha)}</td>
+      <td><a href="mailto:${encodeURIComponent(a.email)}" style="color:var(--blue);text-decoration:none">${esc(a.email)}</a></td>
+      <td style="color:var(--text-light)">${esc(a.paso)}</td>
+      <td><a href="mailto:${encodeURIComponent(a.email)}?subject=${asunto}&body=${cuerpo}" style="color:var(--sage);font-size:12px">Recontactar →</a></td>
     </tr>
   `).join('');
 }
@@ -496,13 +524,12 @@ function renderStats(){
   const niveles = {alto:0,medio:0,bajo:0};
   const estados = {};
   allLeads.forEach(l=>{
-    niveles[l.nivel]=(niveles[l.nivel]||0)+1;
+    if(l.nivel in niveles) niveles[l.nivel]++;
     estados[l.estado]=(estados[l.estado]||0)+1;
   });
   const total = allLeads.length;
 
-  const distEl = document.getElementById('stats-dist');
-  distEl.innerHTML = Object.entries({alto:'Bloqueo alto (7–10)',medio:'Bloqueo medio (5–6)',bajo:'Bloqueo bajo (1–4)'}).map(([k,label])=>{
+  document.getElementById('stats-dist').innerHTML = Object.entries({alto:'Bloqueo alto (7–10)',medio:'Bloqueo medio (5–6)',bajo:'Bloqueo bajo (1–4)'}).map(([k,label])=>{
     const n = niveles[k]||0;
     const pct = total ? Math.round(n/total*100) : 0;
     const color = k==='alto'?'#C0392B':k==='medio'?'#D4A017':'#5E9E82';
@@ -515,12 +542,11 @@ function renderStats(){
   }).join('');
 
   const estadoLabels = {nuevo:'Sin contactar',contactado:'Contactado',cualificado:'Cualificado',cerrado:'Cerrado',perdido:'Perdido'};
-  const estadoEl = document.getElementById('stats-estado');
-  estadoEl.innerHTML = Object.entries(estados).map(([k,n])=>{
+  document.getElementById('stats-estado').innerHTML = Object.entries(estados).map(([k,n])=>{
     const pct = total ? Math.round(n/total*100) : 0;
     return `<div style="margin-bottom:16px">
       <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px">
-        <span>${estadoLabels[k]||k}</span><span style="font-weight:500">${n} (${pct}%)</span>
+        <span>${esc(estadoLabels[k]||k)}</span><span style="font-weight:500">${n} (${pct}%)</span>
       </div>
       <div style="height:8px;background:#EEF0F8;border-radius:4px"><div style="height:100%;width:${pct}%;background:var(--blue-mid);border-radius:4px"></div></div>
     </div>`;
@@ -542,92 +568,68 @@ function searchLeads(q){
 
 function applyFilters(){
   filteredLeads = allLeads.filter(l=>{
-    const matchFilter = currentFilter==='todos' || 
+    const matchFilter = currentFilter==='todos' ||
       (currentFilter==='nuevo' && l.estado==='nuevo') ||
       (currentFilter==='alto' && l.nivel==='alto') ||
       (currentFilter==='contactado' && l.estado==='contactado');
-    const matchSearch = !currentSearch || l.email.toLowerCase().includes(currentSearch);
+    const matchSearch = !currentSearch ||
+      l.email.toLowerCase().includes(currentSearch) ||
+      (l.nombre||'').toLowerCase().includes(currentSearch) ||
+      (l.nota||'').toLowerCase().includes(currentSearch);
     return matchFilter && matchSearch;
   });
 }
 
 // ── ACTIONS ──────────────────────────────────────────────────
-function updateEstado(idx, val){
+async function updateEstado(idx, val){
   allLeads[idx].estado = val;
   renderKPIs();
-  updateEstadoRemoto(allLeads[idx].id, val);
+  try {
+    const r = await api('actualizar_estado', { id: allLeads[idx].id, estado: val });
+    if(!r.ok) alert('No se pudo guardar el estado en Sheets');
+  } catch(e){ alert('No se pudo guardar el estado en Sheets'); }
 }
 
-function updateNota(idx, val){
+async function updateNota(idx, val){
+  if(allLeads[idx].nota === val) return;
   allLeads[idx].nota = val;
-  updateNotaRemota(allLeads[idx].id, val);
+  try {
+    const r = await api('actualizar_nota', { id: allLeads[idx].id, nota: val });
+    if(!r.ok) alert('No se pudo guardar la nota en Sheets');
+  } catch(e){ alert('No se pudo guardar la nota en Sheets'); }
 }
 
 function exportCSV(){
-  const rows = [['Fecha','Email','Score','Nivel','Estado','Notas']];
-  allLeads.forEach(l=>rows.push([l.fecha,l.email,l.score,l.nivel,l.estado,l.nota]));
-  const csv = rows.map(r=>r.map(v=>`"${v}"`).join(',')).join('\n');
+  const rows = [['Fecha','Nombre','Email','Score','Nivel','Estado','Notas']];
+  allLeads.forEach(l=>rows.push([l.fecha,l.nombre,l.email,l.score,l.nivel,l.estado,l.nota]));
+  // Comillas escapadas y protección contra fórmulas al abrir en Excel
+  const cell = v => { let s = String(v==null?'':v); if(/^[=+\-@]/.test(s)) s = "'"+s; return '"'+s.replace(/"/g,'""')+'"'; };
+  const csv = rows.map(r=>r.map(cell).join(',')).join('\n');
   const a = document.createElement('a');
-  a.href = 'data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.href = 'data:text/csv;charset=utf-8,'+encodeURIComponent('﻿'+csv);
   a.download = 'delens_leads_'+new Date().toISOString().slice(0,10)+'.csv';
   a.click();
 }
 
-// ── APPS SCRIPT URL ─────────────────────────────────────────
-// Pega aquí la URL que genera Google Apps Script al desplegarlo
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzPGvKvrobK9_xA9L6xmTUfTBVD6gTmsw9LXolk0CeXOPm8YeGE2EmbHPFLsrRowin20g/exec'; // <-- PEGAR URL AQUÍ
-
+let syncing = false;
 async function syncSheets(){
-  if(!APPS_SCRIPT_URL){
-    alert('Pendiente: pega la URL del Apps Script en el código del CRM.\nVer instrucciones en delens_apps_script.js');
-    return;
-  }
+  if(syncing || !crmKey) return;
+  syncing = true;
+  const btns = document.querySelectorAll('.sync-btn');
+  btns.forEach(b=>{ b.dataset.label = b.dataset.label || b.textContent; b.textContent='↻ Cargando...'; b.disabled=true; });
   try {
-    const btn = event.currentTarget;
-    btn.textContent = '↻ Cargando...';
-    btn.disabled = true;
-
-    const [leadsRes, abandonosRes] = await Promise.all([
-      fetch(APPS_SCRIPT_URL + '?action=leads').then(r=>r.json()),
-      fetch(APPS_SCRIPT_URL + '?action=abandonos').then(r=>r.json())
-    ]);
-
-    if(leadsRes.ok && leadsRes.leads.length > 0){
-      allLeads = leadsRes.leads.map(l=>({
-        ...l,
-        score: parseFloat(l.score),
-        nota: l.nota || '',
-        estado: l.estado || 'nuevo'
-      }));
-      filteredLeads = [...allLeads];
-      renderAll();
-    }
-
-    btn.textContent = '↻ Sincronizar Sheets';
-    btn.disabled = false;
+    const [leadsRes, abandonosRes] = await Promise.all([api('leads'), api('abandonos')]);
+    if(leadsRes.error === 'unauthorized' || abandonosRes.error === 'unauthorized'){ logout(); return; }
+    if(leadsRes.ok) allLeads = leadsRes.leads;
+    if(abandonosRes.ok) allAbandonos = abandonosRes.abandonos;
+    renderAll();
+    if(document.getElementById('section-stats').classList.contains('active')) renderStats();
   } catch(err) {
     alert('Error al conectar con Google Sheets: ' + err.message);
+  } finally {
+    btns.forEach(b=>{ b.textContent=b.dataset.label; b.disabled=false; });
+    syncing = false;
   }
-}
-
-async function updateEstadoRemoto(id, estado){
-  if(!APPS_SCRIPT_URL) return;
-  try {
-    await fetch(APPS_SCRIPT_URL, {
-      method:'POST',
-      body: JSON.stringify({action:'actualizar_estado', id, estado})
-    });
-  } catch(e){ /* silencioso */ }
-}
-
-async function updateNotaRemota(id, nota){
-  if(!APPS_SCRIPT_URL) return;
-  try {
-    await fetch(APPS_SCRIPT_URL, {
-      method:'POST',
-      body: JSON.stringify({action:'actualizar_nota', id, nota})
-    });
-  } catch(e){ /* silencioso */ }
 }
 </script>
 </body>
