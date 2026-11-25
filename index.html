@@ -730,10 +730,11 @@ async function enviarFormulario(){
       });
     } catch(e){}
   }
-  const subject = encodeURIComponent('Contacto desde delens.es — ' + nombre);
-  const body = encodeURIComponent('Nombre: ' + nombre + '\nEmail: ' + email + '\n\nMensaje:\n' + mensaje);
-  window.open('mailto:fernanda@delens.es?subject=' + subject + '&body=' + body);
   document.getElementById('form-ok').style.display = 'block';
+  document.getElementById('f-nombre').value = '';
+  document.getElementById('f-email').value = '';
+  document.getElementById('f-mensaje').value = '';
+  document.getElementById('f-legal').checked = false;
   btn.disabled = false;
 }
 </script>
